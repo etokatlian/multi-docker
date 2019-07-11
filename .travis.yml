@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t etokatlian/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true etokatlian/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t etokatlian/multi-client ./client
+  - docker build -t etokatlian/multi-nginx ./nginx
+  - docker build -t etokatlian/multi-server ./server
+  - docker build -t etokatlian/multi-worker ./worker
+  # Login to docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Push images to docker hub
+  - docker push etokatlian/multi-client
+  - docker push etokatlian/multi-nginx
+  - docker push etokatlian/multi-server
+  - docker push etokatlian/multi-worker
